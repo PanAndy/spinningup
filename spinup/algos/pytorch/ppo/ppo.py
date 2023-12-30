@@ -60,6 +60,7 @@ class PPOBuffer:
         vals = np.append(self.val_buf[path_slice], last_val)
         
         # the next two lines implement GAE-Lambda advantage calculation
+        # 这里对Q的估计不是使用u_t，而是使用r+γV(s_{t+1})形式，其实使用u_t也行。TODO: 更进一步地看，这里的a≠q-v?是别的计算方法？
         deltas = rews[:-1] + self.gamma * vals[1:] - vals[:-1]
         self.adv_buf[path_slice] = core.discount_cumsum(deltas, self.gamma * self.lam)
         
@@ -326,6 +327,10 @@ def ppo(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
                 if terminal:
                     # only save EpRet / EpLen if trajectory finished
                     logger.store(EpRet=ep_ret, EpLen=ep_len)
+                # 一个epoch会打很多局游戏，搜集很多条trajectories
+                # 一个epoch会搜集steps_per_epoch个step，由很多个trajectories构成。这些trajectories被分配到不同的进程上运行。
+                # 每个进程上搜集local_steps_per_epoch个step
+                # 类DDP训练：所有进程上的行为策略π初始都是相同的，由mpi_avg_grads保证optimizer.step()前各进程的梯度一致，optimizer.step()之后，网络参数依然一致
                 o, ep_ret, ep_len = env.reset(), 0, 0
 
 

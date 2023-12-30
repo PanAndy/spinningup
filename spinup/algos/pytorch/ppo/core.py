@@ -119,7 +119,7 @@ class MLPActorCritic(nn.Module):
             self.pi = MLPGaussianActor(obs_dim, action_space.shape[0], hidden_sizes, activation)
         elif isinstance(action_space, Discrete):
             self.pi = MLPCategoricalActor(obs_dim, action_space.n, hidden_sizes, activation)
-
+        # 一般的π和v不是可以共享特征提取的权重的吗？
         # build value function
         self.v  = MLPCritic(obs_dim, hidden_sizes, activation)
 
